@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import { db, storage } from "./firebase-config";
+import { db } from "./firebase-config";
 import {
   addDoc,
   collection,
@@ -9,46 +9,51 @@ import {
   getDocs,
   orderBy,
   query,
-  updateDoc,
 } from "firebase/firestore";
-import { ref, uploadBytes } from "firebase/storage";
-import { v4 } from "uuid";
 
 function App() {
   const [users, setUsers] = useState([]);
-  const [newAge, setNewAge] = useState(0);
-  const [newName, setNewName] = useState(0);
-  const [imageUpload, setImageUpload] = useState(null);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [matchingUsers, setMatchingUsers] = useState([]);
+  const [newName, setNewName] = useState("");
+  const [pwdInput, setPwdInput] = useState("");
+  const [randomWords, setRandomWords] = useState([]);
+
+  const pwd = "aaaaaaaa";
 
   const usersCollectionRef = collection(db, "users");
 
   useEffect(() => {
     const getUsers = async () => {
-      const data = await getDocs(
-        query(usersCollectionRef, orderBy("timestamp", "desc"))
-      );
-      setUsers(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+      // const data = await getDocs(
+      //   query(usersCollectionRef, orderBy("timestamp", "desc"))
+      // );
+      // setUsers(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+      setUsers([
+        { name: "호랑이" },
+        { name: "맥주" },
+        { name: "사진" },
+        { name: "카메라" },
+        { name: "차" },
+      ]);
     };
     getUsers();
-  }, [usersCollectionRef]);
+  }, []);
 
   const createUser = async () => {
-    console.log(newName, newAge);
     await addDoc(usersCollectionRef, {
       name: newName,
-      age: Number(newAge),
       timestamp: new Date(),
     });
-    setNewAge(0);
     setNewName("");
   };
 
-  const updateUser = async (id, age) => {
-    const userDoc = doc(db, "users", id);
-    const newFields = { age: age + 1 };
+  // const updateUser = async (id) => {
+  //   const userDoc = doc(db, "users", id);
+  //   const newFields = { age: age + 1 };
 
-    await updateDoc(userDoc, newFields);
-  };
+  //   await updateDoc(userDoc, newFields);
+  // };
 
   const deleteUser = async (id) => {
     const userDoc = doc(db, "users", id);
@@ -56,51 +61,82 @@ function App() {
     await deleteDoc(userDoc);
   };
 
-  const uploadImage = async () => {
-    if (imageUpload === null) return;
-    const imageRef = await ref(storage, `images/${imageUpload.name + v4()}`);
-    // 14:54
-    console.log(imageRef);
-    uploadBytes(imageRef, imageUpload).then(() => {
-      alert("image upload");
-    });
+  const searchUser = () => {
+    setMatchingUsers(
+      users.map((user) => {
+        if (user.name.includes(searchKeyword)) {
+          return true;
+        }
+        return false;
+      })
+    );
+  };
+
+  const numOfWord = 3;
+
+  const extractRandomWord = () => {
+    const randomWordCandidate = [];
+    const numOfUser = users.length;
+    if (users.length === 0) {
+      return;
+    }
+    for (let i = 0; i < numOfWord; i++) {
+      const randNum = Math.floor(Math.random() * (numOfUser - 1) + 1);
+      randomWordCandidate.push(users[randNum]);
+    }
+    setRandomWords(randomWordCandidate);
   };
 
   return (
     <div className="App">
-      <input
-        onChange={(event) => setNewName(event.target.value)}
-        value={newName}
-      />
-      <input
-        type="number"
-        onChange={(event) => setNewAge(event.target.value)}
-        value={newAge}
-      />
-
-      <button onClick={createUser}> Create User </button>
-
-      {users.map((user, index) => {
-        const { name, age, id } = user;
-        return (
-          <div key={`${name}_${age}_${index}`}>
-            {`name: ${name}`}
-            <br />
-            {`age: ${age}`}
-            <button onClick={() => updateUser(id, age)}>add age</button>
-            <button onClick={() => deleteUser(id)}>delete user</button>
-          </div>
-        );
+      <button onClick={extractRandomWord}>get random three words</button>
+      {randomWords.map((user, index) => {
+        const { name } = user;
+        return <div key={`${name}_${index}`}>{`name: ${name}`}</div>;
       })}
-
-      <div>import image </div>
       <input
-        type="file"
-        onChange={(event) => {
-          setImageUpload(event.target.files[0]);
-        }}
+        onChange={(event) => setPwdInput(event.target.value)}
+        value={pwdInput}
       />
-      <button onClick={uploadImage}>Upload image</button>
+      {pwdInput === pwd && (
+        <div>
+          <div>
+            <input
+              onChange={(event) => setSearchKeyword(event.target.value)}
+              value={searchKeyword}
+            />
+            <button onClick={searchUser}> Search Word </button>
+            {matchingUsers.map((user, index) => {
+              const { name, id } = user;
+              return (
+                <div key={`${name}_${index}`}>
+                  {`name: ${name}`}
+                  <button onClick={() => deleteUser(id)}>delete user</button>
+                </div>
+              );
+            })}
+          </div>
+          <br />
+          {matchingUsers.length === 0 && (
+            <div>
+              <input
+                onChange={(event) => setNewName(event.target.value)}
+                value={newName}
+              />
+              <button onClick={createUser}> Create User </button>
+              {users.map((user, index) => {
+                const { name, id } = user;
+                return (
+                  <div key={`${name}_${index}`}>
+                    {`name: ${name}`}
+                    <button onClick={() => deleteUser(id)}>delete user</button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
