@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import { db } from "./firebase-config";
+import { db, storage } from "./firebase-config";
 import {
   addDoc,
   collection,
@@ -11,11 +11,14 @@ import {
   query,
   updateDoc,
 } from "firebase/firestore";
+import { ref, uploadBytes } from "firebase/storage";
+import { v4 } from "uuid";
 
 function App() {
   const [users, setUsers] = useState([]);
   const [newAge, setNewAge] = useState(0);
   const [newName, setNewName] = useState(0);
+  const [imageUpload, setImageUpload] = useState(null);
 
   const usersCollectionRef = collection(db, "users");
 
@@ -53,6 +56,16 @@ function App() {
     await deleteDoc(userDoc);
   };
 
+  const uploadImage = async () => {
+    if (imageUpload === null) return;
+    const imageRef = await ref(storage, `images/${imageUpload.name + v4()}`);
+    // 14:54
+    console.log(imageRef);
+    uploadBytes(imageRef, imageUpload).then(() => {
+      alert("image upload");
+    });
+  };
+
   return (
     <div className="App">
       <input
@@ -79,6 +92,15 @@ function App() {
           </div>
         );
       })}
+
+      <div>import image </div>
+      <input
+        type="file"
+        onChange={(event) => {
+          setImageUpload(event.target.files[0]);
+        }}
+      />
+      <button onClick={uploadImage}>Upload image</button>
     </div>
   );
 }
