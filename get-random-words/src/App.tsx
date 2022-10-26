@@ -65,7 +65,11 @@ function App() {
             <img src={logo} className="App-logo" alt="logo" />
           </div>
           {resultOfRandomWords.map((word, index) => {
-            return <div key={`${word}_${index}`}>{word}</div>;
+            return (
+              <div className="random-word" key={`${word}_${index}`}>
+                {word}
+              </div>
+            );
           })}
           <br />
           <input

@@ -37,6 +37,12 @@
   }
 }
 
+.random-word {
+  font-size: 25px;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
 input {
   all: unset;
   background-color: white;
@@ -44,7 +50,7 @@ input {
   width: 200px;
   height: 30px;
   border-radius: 5px;
-  margin-top: 90px;
+  margin-top: 60px;
 }
 
 button {
